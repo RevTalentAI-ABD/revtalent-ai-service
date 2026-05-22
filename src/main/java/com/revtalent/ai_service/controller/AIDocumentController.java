@@ -32,7 +32,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin("*")
+
 public class AIDocumentController {
 
     @Autowired

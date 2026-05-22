@@ -23,7 +23,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin("*")
+
 public class AIChatController {
 
     @Autowired
