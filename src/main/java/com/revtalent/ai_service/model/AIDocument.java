@@ -21,6 +21,9 @@ public class AIDocument {
 
     private LocalDateTime uploadedAt = LocalDateTime.now();
 
+    @Column(name = "user_id")
+    private Long userId;
+
     public AIDocument() {
     }
 
@@ -62,5 +65,13 @@ public class AIDocument {
 
     public LocalDateTime getUploadedAt() {
         return uploadedAt;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

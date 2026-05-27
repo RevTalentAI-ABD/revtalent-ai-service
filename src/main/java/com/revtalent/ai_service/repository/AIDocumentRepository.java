@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface AIDocumentRepository extends JpaRepository<AIDocument, Long> {
     List<AIDocument> findByIncludedTrue();
+    List<AIDocument> findByUserId(Long userId);
+    List<AIDocument> findByUserIdAndIncludedTrue(Long userId);
+    java.util.Optional<AIDocument> findByIdAndUserId(Long id, Long userId);
 }

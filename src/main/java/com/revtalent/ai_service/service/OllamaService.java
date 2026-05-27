@@ -1,5 +1,6 @@
 package com.revtalent.ai_service.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -10,9 +11,14 @@ import java.util.Map;
 @Service
 public class OllamaService {
 
-    private static final String OLLAMA_URL = "http://localhost:11434/api/generate";
+    @Value("${ollama.base-url:http://localhost:11434}")
+    private String ollamaBaseUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
+
+    private String generateUrl() {
+        return ollamaBaseUrl.replaceAll("/$", "") + "/api/generate";
+    }
 
     private String callOllama(String prompt) {
         try {
@@ -27,7 +33,7 @@ public class OllamaService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response =
-                    restTemplate.postForEntity(OLLAMA_URL, request, Map.class);
+                    restTemplate.postForEntity(generateUrl(), request, Map.class);
 
             if (response.getBody() != null && response.getBody().get("response") != null) {
                 return response.getBody().get("response").toString();

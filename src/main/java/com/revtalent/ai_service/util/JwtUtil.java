@@ -39,4 +39,12 @@ public class JwtUtil {
         return (String) Jwts.parserBuilder().setSigningKey(getKey()).build()
                 .parseClaimsJws(token).getBody().get("role");
     }
+
+    public Long extractUserId(String token) {
+        Object userId = Jwts.parserBuilder().setSigningKey(getKey()).build()
+                .parseClaimsJws(token).getBody().get("userId");
+        if (userId == null) return null;
+        if (userId instanceof Number) return ((Number) userId).longValue();
+        return Long.valueOf(userId.toString());
+    }
 }

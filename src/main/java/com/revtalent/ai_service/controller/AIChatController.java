@@ -12,6 +12,7 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 
 import com.revtalent.ai_service.service.ChromaService;
 import com.revtalent.ai_service.service.OllamaEmbeddingService;
+import com.revtalent.ai_service.util.SecurityUserContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -23,7 +24,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/ai")
-
+@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class AIChatController {
 
     @Autowired
@@ -32,21 +33,20 @@ public class AIChatController {
     @Autowired
     private OllamaEmbeddingService embeddingService;
 
+    @Autowired
+    private SecurityUserContext securityUserContext;
+
     @PostMapping("/ask")
-    public Map<String, String> askAI(
+    public ResponseEntity<Map<String, String>> askAI(
             @RequestBody AIRequest request
     ) {
-
         try {
+            String question = request.getQuestion();
+            List<Double> embedding = embeddingService.createEmbedding(question);
 
-            String question =
-                    request.getQuestion();
+            Long userId = securityUserContext.getCurrentUserId();
 
-            List<Double> embedding =
-                    embeddingService.createEmbedding(question);
-
-            List<String> chunks =
-                    chromaService.search(embedding);
+            List<String> chunks = chromaService.search(embedding, userId);
 
             StringBuilder context =
                     new StringBuilder();
@@ -159,24 +159,20 @@ public class AIChatController {
                             .get("response")
                             .toString();
 
-            return Map.of(
+            return ResponseEntity.ok(Map.of(
                     "response",
                     aiResponse
-            );
+            ));
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return Map.of(
-                    "response",
-                    "AI failed: " + e.getMessage()
-            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("response", "AI failed: " + e.getMessage()));
         }
     }
 
     @PostMapping("/screen-resume")
-    public Map<String, String> screenResume(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, String>> screenResume(@RequestBody Map<String, String> request) {
         try {
             String resumeText = request.get("resumeText");
             String jobDescription = request.get("jobDescription");
@@ -202,10 +198,11 @@ public class AIChatController {
             ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:11434/api/generate", entity, Map.class);
             String aiResponse = response.getBody().get("response").toString();
 
-            return Map.of("response", aiResponse);
+            return ResponseEntity.ok(Map.of("response", aiResponse));
         } catch (Exception e) {
             e.printStackTrace();
-            return Map.of("response", "AI failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("response", "AI failed: " + e.getMessage()));
         }
     }
 }

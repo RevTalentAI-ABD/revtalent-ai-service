@@ -2,6 +2,7 @@ package com.revtalent.ai_service.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +13,12 @@ import java.util.*;
 @Service
 public class ChromaService {
 
-    private final String CHROMA_URL =
-            "http://localhost:8000";
+    @Value("${chroma.base-url:http://localhost:8000}")
+    private String chromaBaseUrl;
+
+    private String chromaUrl() {
+        return chromaBaseUrl.replaceAll("/$", "");
+    }
 
     private final String COLLECTION =
             "hr_documents";
@@ -53,7 +58,7 @@ public class ChromaService {
 
             restTemplate.postForEntity(
 
-                    CHROMA_URL +
+                    chromaUrl() +
 
                             "/api/v2/tenants/default_tenant/databases/default_database/collections",
 
@@ -76,15 +81,11 @@ public class ChromaService {
     // STORE CHUNK
 
     public void storeChunk(
-
             String id,
-
             String chunk,
-
-            List<Double> embedding
-
+            List<Double> embedding,
+            Long userId
     ) {
-
         try {
 
             String collectionId =
@@ -108,6 +109,10 @@ public class ChromaService {
                     List.of(embedding)
             );
 
+            if (userId != null) {
+                body.put("metadatas", List.of(Map.of("userId", userId)));
+            }
+
             HttpHeaders headers =
                     new HttpHeaders();
 
@@ -118,30 +123,30 @@ public class ChromaService {
             HttpEntity<Map<String, Object>> entity =
                     new HttpEntity<>(body, headers);
 
-            restTemplate.postForEntity(
-
-                    CHROMA_URL +
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    chromaUrl() +
                             "/api/v2/tenants/default_tenant/databases/default_database/collections/" +
                             collectionId +
                             "/add",
-
                     entity,
-
                     String.class
             );
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Chroma indexing failed: " + response.getBody());
+            }
 
         } catch (Exception e) {
-
             e.printStackTrace();
+            throw new RuntimeException("Failed to store chunk in Chroma: " + e.getMessage(), e);
         }
     }
 
     // SEARCH SIMILAR CHUNKS
 
     public List<String> search(
-            List<Double> embedding
+            List<Double> embedding,
+            Long userId
     ) {
-
         try {
 
             String collectionId =
@@ -160,6 +165,10 @@ public class ChromaService {
                     4
             );
 
+            if (userId != null) {
+                body.put("where", Map.of("userId", userId));
+            }
+
             HttpHeaders headers =
                     new HttpHeaders();
 
@@ -173,7 +182,7 @@ public class ChromaService {
             ResponseEntity<String> response =
                     restTemplate.postForEntity(
 
-                            CHROMA_URL +
+                            chromaUrl() +
                                     "/api/v2/tenants/default_tenant/databases/default_database/collections/" +
                                     collectionId +
                                     "/query",
@@ -205,11 +214,9 @@ public class ChromaService {
             return chunks;
 
         } catch (Exception e) {
-
             e.printStackTrace();
+            throw new RuntimeException("Failed to search Chroma: " + e.getMessage(), e);
         }
-
-        return List.of();
     }
 
     // GET COLLECTION ID
@@ -220,7 +227,7 @@ public class ChromaService {
         String response =
                 restTemplate.getForObject(
 
-                        CHROMA_URL +
+                        chromaUrl() +
                                 "/api/v2/tenants/default_tenant/databases/default_database/collections",
 
                         String.class
