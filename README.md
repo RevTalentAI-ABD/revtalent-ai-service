@@ -4,7 +4,7 @@ The **AI Service** is the cognitive layer of the **RevTalent** microservices eco
 
 ---
 
-## 🧠 Core AI Engines & Models
+## Core AI Engines & Models
 
 The service interfaces directly with local or remote AI components to run inference and vector operations:
 
@@ -29,7 +29,7 @@ The service interfaces directly with local or remote AI components to run infere
 
 ---
 
-## 📁 Document Processing & Parsing
+## Document Processing & Parsing
 
 The service utilizes Java libraries to parse unstructured data for indexing:
 - **Apache PDFBox** (`pdfbox`): Reads and extracts raw text segments from PDF manuals, contracts, or forms.
@@ -38,13 +38,13 @@ The service utilizes Java libraries to parse unstructured data for indexing:
 
 ---
 
-## 💾 Chat History Persistence
+## Chat History Persistence
 
 Conversations between employees and the AI HR Assistant are recorded inside **MongoDB** (`chat_history` collection), maintaining session logs across devices and logins.
 
 ---
 
-## 🛠️ Dependencies Added
+## Dependencies Added
 
 The following packages are declared in the service's `pom.xml`:
 
